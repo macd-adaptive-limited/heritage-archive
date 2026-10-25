@@ -112,6 +112,31 @@ export function recordPage(r, site) {
 `;
 }
 
+// 404.html: static hosts (GitHub Pages, Cloudflare Pages, Netlify) serve it for unknown URLs.
+// It can be served from any depth, so every link is absolute from the portal root.
+export function notFoundPage(site) {
+  const home = basePath(site) || "/";
+  return `<!doctype html>
+<html lang="${esc(site.lang)}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found - ${esc(site.title)}</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="${esc(home)}style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><h1>${esc(site.title)}</h1></header>
+<main id="main">
+<h2>Page not found</h2>
+<p>This page does not exist. <a href="${esc(home)}">Search the index</a> to find a record by name.</p>
+</main>
+</body>
+</html>
+`;
+}
+
 export function indexPage(site, count) {
   return `<!doctype html>
 <html lang="${esc(site.lang)}">

@@ -16,12 +16,19 @@ test("sample data builds into an indexed site", () => {
   assert.ok(existsSync("site/img/sample-page.svg"));
 });
 
+test("404.html is built, noindex and links back to the portal root", () => {
+  const html = readFileSync("site/404.html", "utf8");
+  assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+  assert.match(html, /href="\/style\.css"/);
+  assert.match(html, /<a href="\/">Search the index<\/a>/);
+});
+
 // ---- Checks on the built sample portal (runs after the build above, same process) ----
 import { readFileSync, statSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 
 const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]));
-const htmlFiles = () => walk("site").filter((f) => f.endsWith(".html") && !f.startsWith("site/pagefind") && !f.startsWith("site/vendor"));
+const htmlFiles = () => walk("site").filter((f) => f.endsWith(".html") && !f.startsWith("site/pagefind") && !f.startsWith("site/vendor") && f !== "site/404.html"); // 404.html uses root-absolute links, checked in its own test
 
 test("every local link, script, stylesheet and image in the built pages resolves to a file", () => {
   const missing = [];

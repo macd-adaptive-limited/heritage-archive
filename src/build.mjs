@@ -3,7 +3,7 @@
 // Run with `npm run build`. Output is plain HTML/CSS/JS.
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync, rmSync, cpSync } from "node:fs";
 import { validateRecords } from "./validate.mjs";
-import { recordPage, indexPage, safeId, robotsTxt, sitemapXml, STYLE, VIEWER_JS } from "./render.mjs";
+import { recordPage, indexPage, safeId, robotsTxt, sitemapXml, notFoundPage, STYLE, VIEWER_JS } from "./render.mjs";
 
 const DEFAULT_SITE = {
   lang: "en",
@@ -40,6 +40,7 @@ writeFileSync("site/style.css", STYLE);
 writeFileSync("site/viewer.js", VIEWER_JS);
 for (const r of records) writeFileSync(`site/r/${safeId(r.id)}.html`, recordPage(r, site));
 writeFileSync("site/index.html", indexPage(site, records.length));
+writeFileSync("site/404.html", notFoundPage(site));
 writeFileSync("site/robots.txt", robotsTxt(site));
 if (site.indexable === true && site.baseUrl) writeFileSync("site/sitemap.xml", sitemapXml(site, records));
 console.log(`site/ built: ${records.length} record pages`);
