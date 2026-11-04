@@ -337,7 +337,7 @@ h1 { font-size: 1.6rem; margin: 0 0 .2rem; }
 .meta, header p { color: #6d5c44; font-size: .95rem; }
 .notice { background: #fdf0d0; border: 1px solid #d8c9a8; border-radius: 6px; padding: .5rem .7rem; font-size: .85rem; }
 .tag { display: inline-block; font-size: .72rem; padding: .1rem .45rem; border-radius: 999px; }
-.alta { background: #dcefd9; color: #2c5d2c; } .media { background: #fdf0d0; color: #8a6d1f; } .baja { background: #f8ddda; color: #96372e; }
+.alta { background: #dcefd9; color: #2c5d2c; } .media { background: #fdf0d0; color: #7a5f16; } .baja { background: #f8ddda; color: #96372e; }
 .fuente { font-size: .8rem; color: #6d5c44; }
 a { color: #1d4f7a; }
 :root { --pagefind-ui-scale: 1; --pagefind-ui-primary: #5E8298; --pagefind-ui-background: #fffdf7; --pagefind-ui-border: #b7a582; --pagefind-ui-text: #2b2118; --pagefind-ui-font: Georgia, serif; }
