@@ -31,7 +31,7 @@ export function validateRecords(records) {
     if (!CONFIANZA.has(r.confianza)) err(`confianza must be one of ${[...CONFIANZA].join("|")}`);
     if (typeof r.revisado !== "boolean") err("revisado must be true or false");
     for (const k of ["relacion", "estado", "profesion", "residencia", "parroquia", "municipio"]) if (r[k] != null && typeof r[k] !== "string") err(`${k} must be a string`);
-    if (r.imagen != null && r.imagen !== "" && !safeImage(r.imagen)) err("imagen must be a plain relative path (letters, digits, . _ - and /; no .., no scheme)");
+    if (r.imagen != null && r.imagen !== "" && (typeof r.imagen !== "string" || !safeImage(r.imagen))) err("imagen must be a plain relative path (letters, digits, . _ - and /; no .., no scheme)");
     if (r.linea != null) {
       if (!safeBox(r.linea)) err("linea must be {x,y,w,h} fractions in 0..1 inside the page");
       else if (!r.imagen) err("linea needs imagen");

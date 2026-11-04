@@ -44,3 +44,12 @@ test("edad outside 0-125 is rejected, edad may be omitted", () => {
   const r = ok(); delete r.edad;
   assert.deepEqual(validateRecords([r]), []);
 });
+
+test("image paths reject non-string JSON values instead of coercing them", () => {
+  for (const imagen of [123, true, false, ["page.jpg"], [], {}]) {
+    assert.match(validateRecords([{ ...ok(), imagen }]).join(), /imagen must be a plain relative path/, JSON.stringify(imagen));
+  }
+  for (const imagen of [undefined, null, "", "img/page.jpg"]) {
+    assert.deepEqual(validateRecords([{ ...ok(), imagen }]), [], String(imagen));
+  }
+});

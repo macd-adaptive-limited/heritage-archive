@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, cpSync, symlinkSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, cpSync, symlinkSync, writeFileSync, rmSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -68,5 +68,22 @@ test("a failed build leaves any previous site/ output untouched", () => {
     writeFileSync(join(dir, "data/records.json"), "{bad json");
     assert.equal(build(dir).status, 1);
     assert.equal(existsSync(join(dir, "site/index.html")), true, "previous build output untouched");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a non-string image path is rejected before replacing the previous site", () => {
+  const dir = setupDir();
+  try {
+    mkdirSync(join(dir, "site"), { recursive: true });
+    const marker = join(dir, "site/previous.txt");
+    writeFileSync(marker, "previous synthetic output");
+    const records = JSON.parse(readFileSync(join(dir, "data/records.json"), "utf8"));
+    for (const imagen of [123, true, ["page.jpg"]]) {
+      writeFileSync(join(dir, "data/records.json"), JSON.stringify([{ ...records[0], imagen }]));
+      const run = build(dir);
+      assert.equal(run.status, 1, run.stdout + run.stderr);
+      assert.match(run.stderr, /imagen must be a plain relative path/);
+      assert.equal(readFileSync(marker, "utf8"), "previous synthetic output");
+    }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
