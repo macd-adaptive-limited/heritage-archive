@@ -260,6 +260,17 @@ if (citeBtn) {
     }
   });
 }
+// Shared by a failed script load and a failed image open: replace the
+// unusable viewer surface with the localized explanation, announced politely.
+function showImageFallback() {
+  if (!el) return;
+  el.setAttribute("aria-live", "polite");
+  el.innerHTML = "";
+  const p = document.createElement("p");
+  p.className = "viewer-fallback";
+  p.textContent = es ? "No se ha podido cargar la imagen. Los datos de la ficha siguen disponibles." : "The page scan could not be loaded. The transcript below is still available.";
+  el.appendChild(p);
+}
 function startViewer() {
 if (el && window.OpenSeadragon) {
   if (es) {
@@ -294,6 +305,9 @@ if (el && window.OpenSeadragon) {
     animationTime: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1.2,
     gestureSettingsMouse: { scrollToZoom: true },
   });
+  // A missing or corrupt page image fires "open-failed": explain it instead
+  // of leaving an empty dark box with working zoom controls.
+  viewer.addHandler("open-failed", showImageFallback);
   const parse = (s) => (s ? s.split(",").map(Number) : null);
   const line = parse(el.dataset.line);
   const name = parse(el.dataset.name);
@@ -323,10 +337,7 @@ if (el) {
     const sc = document.createElement("script");
     sc.src = "../vendor/openseadragon/openseadragon.min.js";
     sc.onload = startViewer;
-    sc.onerror = () => {
-      el.setAttribute("aria-live", "polite");
-      el.innerHTML = '<p class="viewer-fallback">' + (es ? 'No se ha podido cargar la imagen. Los datos de la ficha siguen disponibles.' : 'The page scan could not be loaded. The transcript below is still available.') + '</p>';
-    };
+    sc.onerror = showImageFallback;
     document.head.appendChild(sc);
   };
   if ("IntersectionObserver" in window) {
