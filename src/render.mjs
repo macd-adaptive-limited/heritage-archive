@@ -222,7 +222,26 @@ if (citeBtn) {
     const text = citeBtn.dataset.cite + " " + location.href.split("#")[0];
     const status = document.getElementById("cite-status");
     try { await navigator.clipboard.writeText(text); status.textContent = es ? "Cita copiada." : "Citation copied."; }
-    catch { window.prompt(es ? "Copia esta cita:" : "Copy this citation:", text); }
+    catch {
+      let field = document.getElementById("cite-fallback");
+      if (!field) {
+        const label = document.createElement("label");
+        label.htmlFor = "cite-fallback";
+        label.textContent = es ? "Cita para copiar" : "Citation to copy";
+        field = document.createElement("textarea");
+        field.id = "cite-fallback";
+        field.readOnly = true;
+        field.rows = 4;
+        const fallback = document.createElement("div");
+        fallback.className = "citation-fallback noprint";
+        fallback.append(label, field);
+        citeBtn.parentElement.after(fallback);
+      }
+      field.value = text;
+      status.textContent = es ? "No se ha podido copiar automáticamente. Selecciona y copia la cita de abajo." : "Automatic copying is unavailable. Select and copy the citation below.";
+      field.focus();
+      field.select();
+    }
   });
 }
 function startViewer() {
@@ -301,7 +320,8 @@ if (el) {
 }
 `;
 
-export const STYLE = `.archive-result { list-style:none; border:1px solid #b7a582; border-radius:6px; padding:.8rem; margin:.5rem 0; overflow-wrap:anywhere; } .archive-result h2 { font-size:1.1rem; margin:0; } .archive-result p { margin:.5rem 0; } .reading p { white-space:pre-wrap; overflow-wrap:anywhere; } #source-region { scroll-margin-top:1rem; }
+export const STYLE = `.citation-fallback { margin: 1rem 0; } .citation-fallback label { display: block; margin-bottom: .4rem; } .citation-fallback textarea { box-sizing: border-box; width: 100%; padding: .6rem; font: inherit; color: inherit; background: transparent; border: 1px solid #b7a582; border-radius: 6px; overflow-wrap: anywhere; }
+.archive-result { list-style:none; border:1px solid #b7a582; border-radius:6px; padding:.8rem; margin:.5rem 0; overflow-wrap:anywhere; } .archive-result h2 { font-size:1.1rem; margin:0; } .archive-result p { margin:.5rem 0; } .reading p { white-space:pre-wrap; overflow-wrap:anywhere; } #source-region { scroll-margin-top:1rem; }
 .linecrop { margin: 1rem 0; } .linecrop-box { position: relative; width: 100%; max-width: 40rem; background-repeat: no-repeat; border: 1px solid #b7a582; border-radius: 4px; background-color: #1f1a14; }
 .linecrop-hl, .name-highlight { position: absolute; top: 8%; bottom: 8%; background: rgba(255, 213, 0, .28); outline: 2px solid rgba(214, 160, 0, .9); border-radius: 3px; }
 .name-highlight { position: static; }

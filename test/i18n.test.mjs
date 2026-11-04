@@ -22,7 +22,7 @@ test('English and unknown locales retain English labels and escaped data',()=>{
  }
 });
 test('viewer copy, fallback and language detection support Spanish without removing English',()=>{
- for(const v of ['Cita copiada.','Citation copied.','Copia esta cita:','Copy this citation:','No se ha podido cargar la imagen.','The page scan could not be loaded.'])assert.ok(VIEWER_JS.includes(v));
+ for(const v of ['Cita copiada.','Citation copied.','Cita para copiar','Citation to copy','No se ha podido cargar la imagen.','The page scan could not be loaded.'])assert.ok(VIEWER_JS.includes(v));
  assert.ok(VIEWER_JS.includes('document.documentElement.lang'));
 });
 test('age singular and plural are correct in Spanish and English',()=>{
