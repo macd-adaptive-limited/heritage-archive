@@ -332,6 +332,34 @@ if (el && window.OpenSeadragon) {
   // A missing or corrupt page image fires "open-failed": explain it instead
   // of leaving an empty dark box with working zoom controls.
   viewer.addHandler("open-failed", showImageFallback);
+  // The default toolbar buttons are plain divs: no tab stop, no role. Make
+  // each a real button that runs the same viewport action on Enter/Space.
+  // They are found by their stable image file names (titles are localized),
+  // and the actions call the viewport API directly: synthetic clicks do not
+  // reach OpenSeadragon's pointer tracking. Pan and +/- zoom already work on
+  // the focused canvas; home and full page had no keyboard path until now.
+  const toolbarActions = [
+    ["zoomin_rest.png", () => { viewer.viewport.zoomBy(viewer.zoomPerClick); viewer.viewport.applyConstraints(); }],
+    ["zoomout_rest.png", () => { viewer.viewport.zoomBy(1 / viewer.zoomPerClick); viewer.viewport.applyConstraints(); }],
+    ["home_rest.png", () => { viewer.viewport.goHome(); viewer.viewport.applyConstraints(); }],
+    ["fullpage_rest.png", () => viewer.setFullPage(!viewer.isFullPage())],
+  ];
+  for (const [file, action] of toolbarActions) {
+    const img = el.querySelector('img[src$="' + file + '"]');
+    const btn = img && img.closest("div[title]");
+    if (!btn) continue;
+    btn.tabIndex = 0;
+    btn.setAttribute("role", "button");
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        action();
+        // Toggling full page reparents the viewer and drops focus to <body>;
+        // return focus to the control so the key path works in both states.
+        if (btn.isConnected) btn.focus();
+      }
+    });
+  }
   const parse = (s) => (s ? s.split(",").map(Number) : null);
   const line = parse(el.dataset.line);
   const name = parse(el.dataset.name);
