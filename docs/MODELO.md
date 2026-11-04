@@ -19,12 +19,33 @@ Each census row becomes one person record:
   "hogar": 1,
   "imagen": "img/colunga-1869-p003.jpg",
   "fuente": "Padrón de habitantes 1869-1870, sign. C 180/3, Archivo Municipal de Colunga",
-  "confianza": "alta|media|baja",
+  "confianza": "alta",
   "revisado": false
 }
 ```
 
 Field names stay in Spanish on purpose: they mirror the source documents.
+
+## Validation contract
+
+`npm run validate` checks `data/records.json`; `npm run validate -- path/to/records.json` checks another file. `npm run build` runs the same validation before replacing `site/`.
+
+The input must be a JSON array. The validator in `src/validate.mjs` enforces:
+
+| Fields | Accepted values |
+| --- | --- |
+| `id`, `nombre`, `apellidos`, `fuente` | Required non-empty strings. Every `id` must be unique. IDs also must not collide after characters outside `A-Z`, `a-z`, `0-9`, `.`, `_`, `-` are replaced with `_` for `site/r/<id>.html`. Give each person a distinct ID, including people in the same household. |
+| `anio`, `pagina`, `hogar` | Required non-negative integers; `anio` must be between 1000 and 2100 inclusive. |
+| `confianza` | Exactly one of `alta`, `media`, `baja` (not the literal string `alta\|media\|baja`). |
+| `revisado` | Required boolean. The validator does not set it automatically or verify that human review occurred. |
+| `edad` | Optional number between 0 and 125 inclusive; fractional ages are accepted. |
+| `relacion`, `estado`, `profesion`, `residencia`, `parroquia`, `municipio` | Optional strings; empty strings are accepted. |
+| `imagen` | Optional plain relative path, using letters, digits, `.`, `_`, `-` and `/`, with no `..` path segment or URL scheme. Empty means no image. For copied page images, use `img/<filename>` (see README). Validation checks path syntax, not whether the file exists. |
+| `linea` | Optional box; requires `imagen`, positive `w` and `h`, non-negative `x` and `y`, and coordinates contained in the page (rounding tolerance 0.0001). `aspect` must be strictly greater than 0.1 and less than 10. Numeric strings are accepted by the coordinate conversion. |
+| `lectura_original`, `correccion` | Optional non-empty strings. A correction requires an original reading. |
+| `variantes` | Optional array of non-empty strings. Currently validated but not rendered or included in the search output. |
+
+Optional fields may also be `null`. Unknown fields are accepted but are not rendered; do not use this as a reason to include private material.
 
 Rules:
 - `hogar` groups the people of the same household (the census is organized by household).
