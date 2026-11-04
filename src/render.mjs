@@ -108,7 +108,7 @@ export function lineCropHtml(r, site = {}) {
   const posX = line.w >= 1 ? 0 : (line.x / (1 - line.w)) * 100;
   const posY = line.h >= 1 ? 0 : (line.y / (1 - line.h)) * 100;
   const hl = `left:${pct((name.x - line.x) / line.w)};width:${pct(name.w / line.w)}`;
-  return `<figure class="linecrop" data-pagefind-ignore>
+  return `<figure class="linecrop" id="linecrop" data-pagefind-ignore>
     <div class="linecrop-box" role="img" aria-label="${ui(site, "Crop of the original line for")} ${esc(r.nombre)} ${esc(r.apellidos)}" style="aspect-ratio:${Math.round(lineAspect * 100) / 100};background-image:url('../${esc(img)}');background-size:${pct(1 / line.w)} auto;background-position:${Math.round(posX * 100) / 100}% ${Math.round(posY * 100) / 100}%">
       <span class="linecrop-hl" style="${hl}"></span>
     </div>
@@ -262,6 +262,15 @@ if (citeBtn) {
 }
 // Shared by a failed script load and a failed image open: replace the
 // unusable viewer surface with the localized explanation, announced politely.
+// The static line crop is a CSS background-image, which fires no error
+// event: a missing page image would stay as a dark box with a floating
+// highlight and a false caption. Preload the same URL and drop the figure.
+const crop = document.getElementById("linecrop");
+if (crop && el && el.dataset.src) {
+  const probe = document.createElement("img");
+  probe.onerror = () => crop.remove();
+  probe.src = el.dataset.src;
+}
 function showImageFallback() {
   if (!el) return;
   el.setAttribute("aria-live", "polite");
