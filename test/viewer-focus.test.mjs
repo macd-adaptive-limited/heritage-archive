@@ -10,7 +10,7 @@ function fixture(focused = false) {
   const canvasAttrs = {};
   const document = { activeElement: null, documentElement: { lang: 'en' }, createElement: () => ({}), getElementById: id => id === 'viewer' ? el : null };
   const canvas = { isConnected: true, setAttribute(k,v) { canvasAttrs[k] = v; }, focus() { document.activeElement = canvas; } };
-  const el = { dataset: {}, tabIndex: 0, getAttribute: k => attrs[k], setAttribute(k,v) { attrs[k] = v; }, addEventListener(k,fn) { (listeners[k] ??= []).push(fn); }, contains(node) { return node === this || node === canvas; }, appendChild(node) { this.child = node; }, focus() { document.activeElement = this; } };
+  const el = { dataset: {}, tabIndex: 0, getAttribute: k => attrs[k], setAttribute(k,v) { attrs[k] = v; }, addEventListener(k,fn) { (listeners[k] ??= []).push(fn); }, contains(node) { return node === this || node === canvas; }, appendChild(node) { this.child = node; }, focus() { document.activeElement = this; }, querySelector() { return null; } };
   function OpenSeadragon() { return { canvas, addHandler(k,fn) { handlers[k] = fn; } }; }
   if (focused) document.activeElement = el;
   runInNewContext(VIEWER_JS, { document, window: { OpenSeadragon }, OpenSeadragon });
