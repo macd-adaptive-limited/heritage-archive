@@ -13,10 +13,22 @@ const DEFAULT_SITE = {
   placeholder: "Search by name or surname",
 };
 
-const records = JSON.parse(readFileSync("data/records.json", "utf8"));
+// Read a JSON file or stop the build with one clear line (same style as
+// src/validate.mjs), before anything in site/ is touched.
+function readJsonOrExit(path) {
+  try { return JSON.parse(readFileSync(path, "utf8")); }
+  catch (e) { console.error(`${path}: cannot read or parse (${e.message})`); process.exit(1); }
+}
+
+const records = readJsonOrExit("data/records.json");
 const problems = validateRecords(records);
 if (problems.length) { console.error(`data/records.json: ${problems.length} problem(s)\n- ${problems.join("\n- ")}`); process.exit(1); }
-const site = { ...DEFAULT_SITE, ...(existsSync("data/site.json") ? JSON.parse(readFileSync("data/site.json", "utf8")) : {}) };
+const siteOverrides = existsSync("data/site.json") ? readJsonOrExit("data/site.json") : {};
+if (!siteOverrides || typeof siteOverrides !== "object" || Array.isArray(siteOverrides)) {
+  console.error("data/site.json: must be a JSON object (portal settings like lang, title, indexable, baseUrl)");
+  process.exit(1);
+}
+const site = { ...DEFAULT_SITE, ...siteOverrides };
 
 rmSync("site", { recursive: true, force: true });
 mkdirSync("site/r", { recursive: true });
