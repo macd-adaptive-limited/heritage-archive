@@ -273,12 +273,15 @@ if (crop && el && el.dataset.src) {
 }
 function showImageFallback() {
   if (!el) return;
+  const hadFocus = el.contains(document.activeElement);
+  el.tabIndex = 0;
   el.setAttribute("aria-live", "polite");
   el.innerHTML = "";
   const p = document.createElement("p");
   p.className = "viewer-fallback";
   p.textContent = es ? "No se ha podido cargar la imagen. Los datos de la ficha siguen disponibles." : "The page scan could not be loaded. The transcript below is still available.";
   el.appendChild(p);
+  if (hadFocus) el.focus();
 }
 function startViewer() {
 if (el && window.OpenSeadragon) {
@@ -314,6 +317,13 @@ if (el && window.OpenSeadragon) {
     animationTime: window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1.2,
     gestureSettingsMouse: { scrollToZoom: true },
   });
+  // OpenSeadragon handles keyboard input on its canvas, not the wrapper.
+  // Keep one named, operative tab stop and preserve focus during lazy loading.
+  viewer.canvas.setAttribute("role", "region");
+  viewer.canvas.setAttribute("aria-label", el.getAttribute("aria-label"));
+  el.tabIndex = -1;
+  el.addEventListener("focus", () => { if (viewer.canvas.isConnected) viewer.canvas.focus(); });
+  if (document.activeElement === el) viewer.canvas.focus();
   // A missing or corrupt page image fires "open-failed": explain it instead
   // of leaving an empty dark box with working zoom controls.
   viewer.addHandler("open-failed", showImageFallback);
@@ -367,7 +377,7 @@ export const STYLE = `.citation-fallback { margin: 1rem 0; } .citation-fallback 
 .skip { position: absolute; left: .5rem; top: -4rem; background: #1d4f7a; color: #fff; padding: .5rem .8rem; border-radius: 4px; z-index: 10; }
 .skip:focus { top: .5rem; }
 :focus-visible { outline: 3px solid #1d4f7a; outline-offset: 2px; }
-#viewer:focus-visible { outline-offset: -3px; }
+#viewer:focus-visible, #viewer .openseadragon-canvas:focus-visible { outline-offset: -3px; }
 body { font-family: Georgia, 'Times New Roman', serif; max-width: 62rem; margin: 0 auto; padding: 1.5rem 1rem; color: #2b2118; background: #f7f2e9; }
 h1 { font-size: 1.6rem; margin: 0 0 .2rem; }
 .meta, header p { color: #6d5c44; font-size: .95rem; }
