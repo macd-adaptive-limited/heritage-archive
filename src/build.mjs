@@ -1,7 +1,8 @@
 // Static portal generator: data/records.json -> site/ (index page + one page per record),
 // then Pagefind (MIT) indexes the pages for in-browser, accent-insensitive search.
 // Run with `npm run build`. Output is plain HTML/CSS/JS.
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, copyFileSync, rmSync, cpSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, rmSync, cpSync, lstatSync, readdirSync } from "node:fs";
+import { resolve, join, relative, sep } from "node:path";
 import { validateRecords } from "./validate.mjs";
 import { recordPage, indexPage, safeId, robotsTxt, sitemapXml, notFoundPage, STYLE, VIEWER_JS } from "./render.mjs";
 
@@ -20,13 +21,34 @@ const site = { ...DEFAULT_SITE, ...(existsSync("data/site.json") ? JSON.parse(re
 rmSync("site", { recursive: true, force: true });
 mkdirSync("site/r", { recursive: true });
 
+// Reject symlinks, including dangling ones, instead of following or publishing
+// them. The destination must remain a regular file/directory inside site/img.
+const imageRoot = resolve("site/img");
+function copyImages(source, destination) {
+  const rel = relative(imageRoot, resolve(destination));
+  if (rel === ".." || rel.startsWith(".." + sep) || rel.startsWith(sep)) throw new Error("Image destination escapes site/img");
+  const input = lstatSync(source);
+  if (input.isSymbolicLink()) throw new Error(`Image symlinks are not allowed: ${source}`);
+  let output;
+  try { output = lstatSync(destination); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  if (output?.isSymbolicLink()) throw new Error(`Image destination symlink is not allowed: ${destination}`);
+  if (input.isDirectory()) {
+    if (output && !output.isDirectory()) throw new Error(`Image directory/file collision: ${destination}`);
+    mkdirSync(destination, { recursive: true });
+    for (const name of readdirSync(source)) copyImages(join(source, name), join(destination, name));
+  } else if (input.isFile()) {
+    if (output && !output.isFile()) throw new Error(`Image file/directory collision: ${destination}`);
+    // The custom data/img copy intentionally overrides same-name sample files.
+    copyFileSync(source, destination);
+  } else throw new Error(`Unsupported image entry: ${source}`);
+}
+
 // Page images are optional: they belong to the source archive and are not
 // redistributed with this repository.
 // data/sample-img holds only the synthetic sample page; data/img is git-ignored.
 for (const dir of ["data/sample-img", "data/img"]) {
-  if (!existsSync(dir)) continue;
-  mkdirSync("site/img", { recursive: true });
-  for (const f of readdirSync(dir)) copyFileSync(`${dir}/${f}`, `site/img/${f}`);
+  try { lstatSync(dir); } catch (error) { if (error.code === "ENOENT") continue; throw error; }
+  copyImages(dir, "site/img");
 }
 
 // OpenSeadragon (BSD-3-Clause) viewer, copied from node_modules with its license.
