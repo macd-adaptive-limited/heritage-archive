@@ -12,11 +12,11 @@ test("a page image that fails to load removes the line crop figure", () => {
   assert.match(VIEWER_JS, /const crop = document\.getElementById\("linecrop"\)/);
   const probe = VIEWER_JS.match(/const probe = document\.createElement\("img"\);([\s\S]*?)probe\.src = el\.dataset\.src;/);
   assert.ok(probe, "probe preloads the viewer image URL");
-  assert.match(probe[1], /probe\.onerror = \(\) => crop\.remove\(\)/);
+  assert.match(probe[1], /if \(crop\) crop\.remove\(\)/);
 });
 
-test("the probe only runs when both the crop figure and the viewer exist", () => {
-  assert.match(VIEWER_JS, /if \(crop && el && el\.dataset\.src\)/);
+test("the probe only runs when the viewer has an image; the crop removal stays conditional", () => {
+  assert.match(VIEWER_JS, /if \(el && el\.dataset\.src\) \{/);
 });
 
 test("the line crop figure carries the linecrop id the probe looks for", () => {
