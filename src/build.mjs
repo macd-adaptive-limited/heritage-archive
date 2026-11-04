@@ -64,5 +64,6 @@ for (const r of records) writeFileSync(`site/r/${safeId(r.id)}.html`, recordPage
 writeFileSync("site/index.html", indexPage(site, records.length));
 writeFileSync("site/404.html", notFoundPage(site));
 writeFileSync("site/robots.txt", robotsTxt(site));
-if (site.indexable === true && site.baseUrl) writeFileSync("site/sitemap.xml", sitemapXml(site, records));
+const sitemap = sitemapXml(site, records);
+if (sitemap) writeFileSync("site/sitemap.xml", sitemap);
 console.log(`site/ built: ${records.length} record pages`);

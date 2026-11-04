@@ -43,16 +43,32 @@ export const safeImage = (p) => (/^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*$/.test(St
 export const robotsMeta = (site) => (site.indexable === true ? "" : '\n<meta name="robots" content="noindex, nofollow">');
 // "baseUrl" (optional, e.g. "https://example.org/archive/") is where the portal is served. Its path prefixes search result links.
 export function basePath(site) {
-  if (!site.baseUrl) return "";
-  try { const p = new URL(site.baseUrl).pathname; return p.endsWith("/") ? p : p + "/"; } catch { return ""; }
+  const root = baseRoot(site);
+  if (!root) return "";
+  const p = new URL(root).pathname;
+  return p.endsWith("/") ? p : p + "/";
+}
+// The configured baseUrl with a trailing slash, or "" when it is missing or
+// not a valid absolute URL. Consumers treat invalid the same as absent, the
+// way basePath does.
+function baseRoot(site) {
+  const raw = String(site.baseUrl ?? "");
+  if (!raw) return "";
+  let url;
+  try { url = new URL(raw); } catch { return ""; }
+  // Only web URLs can host the portal: mailto:/data: parse but cannot
+  // resolve sitemap.xml against them, and other schemes cannot serve it.
+  if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.host) return "";
+  return raw.endsWith("/") ? raw : raw + "/";
 }
 export function robotsTxt(site) {
   if (site.indexable !== true) return "User-agent: *\nDisallow: /\n";
-  return `User-agent: *\nAllow: /\n${site.baseUrl ? `Sitemap: ${new URL("sitemap.xml", site.baseUrl.endsWith("/") ? site.baseUrl : site.baseUrl + "/").href}\n` : ""}`;
+  const root = baseRoot(site);
+  return `User-agent: *\nAllow: /\n${root ? `Sitemap: ${new URL("sitemap.xml", root).href}\n` : ""}`;
 }
 export function sitemapXml(site, records) {
-  if (site.indexable !== true || !site.baseUrl) return "";
-  const root = site.baseUrl.endsWith("/") ? site.baseUrl : site.baseUrl + "/";
+  const root = baseRoot(site);
+  if (site.indexable !== true || !root) return "";
   const urls = [root, ...records.map((r) => `${root}r/${safeId(r.id)}.html`)];
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join("\n")}\n</urlset>\n`;
 }
