@@ -39,18 +39,18 @@ replaceOutput("site", (output) => {
   const imageRoot = resolve(output, "img");
   function copyImages(source, destination) {
     const rel = relative(imageRoot, resolve(destination));
-    if (rel === ".." || rel.startsWith(".." + sep) || rel.startsWith(sep)) throw new Error("Image destination escapes site/img");
+    if (rel === ".." || rel.startsWith(`..${sep}`) || rel.startsWith(sep)) throw new Error("Image destination escapes site/img");
     const input = lstatSync(source);
     if (input.isSymbolicLink()) throw new Error(`Image symlinks are not allowed: ${source}`);
-    let output;
-    try { output = lstatSync(destination); } catch (error) { if (error.code !== "ENOENT") throw error; }
-    if (output?.isSymbolicLink()) throw new Error(`Image destination symlink is not allowed: ${destination}`);
+    let destinationStat = null;
+    try { destinationStat = lstatSync(destination); } catch (error) { if (error.code !== "ENOENT") throw error; }
+    if (destinationStat?.isSymbolicLink()) throw new Error(`Image destination symlink is not allowed: ${destination}`);
     if (input.isDirectory()) {
-      if (output && !output.isDirectory()) throw new Error(`Image directory/file collision: ${destination}`);
+      if (destinationStat && !destinationStat.isDirectory()) throw new Error(`Image directory/file collision: ${destination}`);
       mkdirSync(destination, { recursive: true });
       for (const name of readdirSync(source)) copyImages(join(source, name), join(destination, name));
     } else if (input.isFile()) {
-      if (output && !output.isFile()) throw new Error(`Image file/directory collision: ${destination}`);
+      if (destinationStat && !destinationStat.isFile()) throw new Error(`Image file/directory collision: ${destination}`);
       // The custom data/img copy intentionally overrides same-name sample files.
       copyFileSync(source, destination);
     } else throw new Error(`Unsupported image entry: ${source}`);

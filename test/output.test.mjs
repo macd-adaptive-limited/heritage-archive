@@ -43,7 +43,7 @@ test("successful build replaces old files rather than retaining stale output", (
 test("commit failure restores previous output", () => fixture((dir, target) => {
   writeOutput(target, "OLD");
   // A missing staged directory forces the second rename to fail after backup.
-  assert.throws(() => replaceOutput(target, () => {}), /ENOENT/);
+  assert.throws(() => replaceOutput(target, (staged) => { assert.equal(existsSync(staged), false); }), /ENOENT/);
   assert.equal(readFileSync(join(target, "index.html"), "utf8"), "OLD");
   assert.deepEqual(readdirSync(dir), ["site"]);
 }));
