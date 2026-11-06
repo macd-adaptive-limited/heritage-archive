@@ -23,9 +23,9 @@ function validateIdentity(r, i, ids, files, err) {
   else {
     if (ids.has(r.id)) err(`duplicate id, also record #${ids.get(r.id)}`);
     else ids.set(r.id, i + 1);
-    const f = safeId(r.id);
-    if (files.has(f) && files.get(f) !== r.id) err(`id maps to the same page file as "${files.get(f)}" (${f}.html)`);
-    files.set(f, r.id);
+    const pageFile = safeId(r.id);
+    if (files.has(pageFile) && files.get(pageFile) !== r.id) err(`id maps to the same page file as "${files.get(pageFile)}" (${pageFile}.html)`);
+    files.set(pageFile, r.id);
   }
 }
 
