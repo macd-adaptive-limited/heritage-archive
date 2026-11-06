@@ -41,7 +41,7 @@ The input must be a JSON array. The validator in `src/validate.mjs` enforces:
 | `edad` | Optional number between 0 and 125 inclusive; fractional ages are accepted. |
 | `relacion`, `estado`, `profesion`, `residencia`, `parroquia`, `municipio` | Optional strings; empty strings are accepted. |
 | `imagen` | Optional plain relative path, using letters, digits, `.`, `_`, `-` and `/`, with no `..` path segment or URL scheme. Empty means no image. For copied page images, use `img/<filename>` (see README). Validation checks path syntax, not whether the file exists. |
-| `linea` | Optional box; requires `imagen`, positive `w` and `h`, non-negative `x` and `y`, and coordinates contained in the page (rounding tolerance 0.0001). `aspect` must be strictly greater than 0.1 and less than 10. Numeric strings are accepted by the coordinate conversion. |
+| `linea` | Optional box; requires `imagen`, positive `w` and `h`, non-negative `x` and `y`, and coordinates contained in the page (rounding tolerance 0.0001). `aspect` must be strictly greater than 0.1 and less than 10. Finite numbers and non-empty numeric strings are accepted. Null, booleans, arrays, objects, and blank strings are rejected for coordinates and aspect. |
 | `lectura_original`, `correccion` | Optional non-empty strings. A correction requires an original reading. |
 | `variantes` | Optional array of non-empty strings. Currently validated but not rendered or included in the search output. |
 

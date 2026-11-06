@@ -14,7 +14,7 @@ function validateImage(r, err) {
   if (r.linea != null) {
     if (!safeBox(r.linea)) err("linea must be {x,y,w,h} fractions in 0..1 inside the page");
     else if (!r.imagen) err("linea needs imagen");
-    else if (!(Number(r.linea.aspect) > 0.1 && Number(r.linea.aspect) < 10)) err("linea.aspect (page width / height, 0.1-10) is needed for the static crop");
+    else if (safeBox(r.linea).aspect == null) err("linea.aspect (page width / height, 0.1-10) is needed for the static crop");
   }
 }
 
