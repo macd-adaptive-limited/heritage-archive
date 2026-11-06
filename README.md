@@ -25,9 +25,18 @@ npm test
 `data/records.json` and `data/img/` are git-ignored on purpose: real data and scans stay out of this repository. Optional `data/site.json` overrides `lang`, `title`, `subtitle` and `placeholder`, and sets two publishing options:
 
 - `indexable` (default `false`): by default every page carries `noindex, nofollow` and `robots.txt` disallows everything, because the portal lists named people. Set `true` only when the collection and its audience call for search-engine indexing.
-- `baseUrl` (e.g. `https://example.org/archive/`): where the portal is served. Its path prefixes Pagefind result links, so the portal can live in a subfolder. With `indexable: true` it also produces `sitemap.xml` and the `Sitemap:` line in `robots.txt`.
+- `baseUrl` (e.g. `https://example.org/archive/`): where the portal is served. Its path prefixes Pagefind result links, so the portal can live in a subfolder. With `indexable: true` it also produces `sitemap.xml` and the `Sitemap:` line in `robots.txt`. Query strings and fragments are removed from this publishing URL, and its path is normalized with a trailing slash. URLs containing a username or password are ignored rather than copied into public files; use the public HTTP(S) location without credentials.
 
 Serve `site/` with any static file server.
+
+The HTML generator (`node src/build.mjs`) prepares files in a temporary sibling
+folder and replaces `site/` only after generation succeeds. An image-copy or
+missing-viewer failure preserves the previous portal; a failed replacement
+attempt restores it. Successful generation removes stale files. The destination
+must be a regular directory, not a file or symlink. Do not run concurrent builds
+against the same output. This is not a deployment transaction: the later Pagefind
+indexing command is separate, and abrupt process termination or disk failure can
+still interrupt the directory swap. Keep release backups for deployments.
 
 ## Loading your own data
 

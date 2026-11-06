@@ -87,3 +87,32 @@ test("a non-string image path is rejected before replacing the previous site", (
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("late image-copy failure leaves the previous portal intact", () => {
+  const dir = setupDir();
+  try {
+    assert.equal(build(dir).status, 0);
+    const previous = readFileSync(join(dir, "site/index.html"), "utf8");
+    writeFileSync(join(dir, "site/keep.txt"), "PREVIOUS");
+    mkdirSync(join(dir, "data/img"));
+    symlinkSync(join(dir, "missing-image"), join(dir, "data/img/broken.svg"));
+    const run = build(dir);
+    assert.equal(run.status, 1, run.stdout + run.stderr);
+    assert.match(run.stderr, /Image symlinks are not allowed/);
+    assert.equal(readFileSync(join(dir, "site/index.html"), "utf8"), previous);
+    assert.equal(readFileSync(join(dir, "site/keep.txt"), "utf8"), "PREVIOUS");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("missing viewer dependency leaves the previous portal intact", () => {
+  const dir = setupDir();
+  try {
+    assert.equal(build(dir).status, 0);
+    const previous = readFileSync(join(dir, "site/index.html"), "utf8");
+    rmSync(join(dir, "node_modules"));
+    const run = build(dir);
+    assert.equal(run.status, 1, run.stdout + run.stderr);
+    assert.match(run.stderr, /ENOENT/);
+    assert.equal(readFileSync(join(dir, "site/index.html"), "utf8"), previous);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
