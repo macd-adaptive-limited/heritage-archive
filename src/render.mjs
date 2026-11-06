@@ -84,12 +84,16 @@ export const safeId = (id) => String(id).replace(/[^A-Za-z0-9._-]/g, "_");
 // Optional line crop: r.linea = { x, y, w, h, aspect? }, all page-relative fractions in 0..1.
 // "aspect" is page width / page height; it is only needed for the static crop.
 // Returns a clean box or null when the data is missing or out of range.
+// Preserve numeric-string inputs, but do not interpret null, booleans or arrays
+// as coordinates. Coercion can otherwise turn malformed OCR data into a real crop.
+const cropNumber = (value) => (typeof value === "number" ||
+  (typeof value === "string" && value.trim() !== "")) ? Number(value) : NaN;
 export function safeBox(b) {
   if (!b || typeof b !== "object") return null;
-  const [x, y, w, h] = ["x", "y", "w", "h"].map((k) => Number(b[k]));
+  const [x, y, w, h] = ["x", "y", "w", "h"].map((k) => cropNumber(b[k]));
   if (![x, y, w, h].every(Number.isFinite)) return null;
   if (x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > 1.0001 || y + h > 1.0001) return null;
-  const aspect = Number(b.aspect);
+  const aspect = cropNumber(b.aspect);
   return { x, y, w, h, aspect: Number.isFinite(aspect) && aspect > 0.1 && aspect < 10 ? aspect : null };
 }
 
