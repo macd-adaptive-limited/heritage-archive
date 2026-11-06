@@ -60,7 +60,13 @@ function baseRoot(site) {
   // Only web URLs can host the portal: mailto:/data: parse but cannot
   // resolve sitemap.xml against them, and other schemes cannot serve it.
   if ((url.protocol !== "http:" && url.protocol !== "https:") || !url.host) return "";
-  return raw.endsWith("/") ? raw : raw + "/";
+  // Credentials and query parameters do not belong in public portal links.
+  // Reject userinfo rather than accidentally publishing it in robots/sitemap.
+  if (url.username || url.password) return "";
+  url.search = "";
+  url.hash = "";
+  if (!url.pathname.endsWith("/")) url.pathname += "/";
+  return url.href;
 }
 export function robotsTxt(site) {
   if (site.indexable !== true) return "User-agent: *\nDisallow: /\n";

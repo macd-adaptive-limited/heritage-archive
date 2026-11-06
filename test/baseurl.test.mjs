@@ -56,3 +56,47 @@ test("the build writes robots.txt without a Sitemap line and no sitemap.xml for 
     assert.equal(existsSync(join(dir, "site/sitemap.xml")), false, "no sitemap.xml without a valid baseUrl");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("query strings and fragments cannot alter public portal paths", () => {
+  for (const baseUrl of [
+    "https://example.org/archive?campaign=sample",
+    "https://example.org/archive/#record",
+    "https://example.org/archive?campaign=sample#record",
+    "https://example.org/archive/?campaign=sample#record",
+  ]) {
+    const site = { indexable: true, baseUrl };
+    assert.equal(basePath(site), "/archive/", baseUrl);
+    assert.equal(robotsTxt(site), "User-agent: *\nAllow: /\nSitemap: https://example.org/archive/sitemap.xml\n", baseUrl);
+    const xml = sitemapXml(site, [rec]);
+    assert.match(xml, /<loc>https:\/\/example\.org\/archive\/<\/loc>/, baseUrl);
+    assert.match(xml, /<loc>https:\/\/example\.org\/archive\/r\/x_1\.html<\/loc>/, baseUrl);
+    for (const [, location] of xml.matchAll(/<loc>(.*?)<\/loc>/g)) assert.doesNotMatch(location, /campaign|#record|\?/);
+  }
+});
+
+test("URLs with credentials never publish userinfo or configure a search path", () => {
+  for (const baseUrl of [
+    "https://demo-user@example.org/archive/",
+    "https://demo-user:synthetic-value@example.org/archive/",
+    "https://:synthetic-value@example.org/archive/",
+  ]) {
+    const site = { indexable: true, baseUrl };
+    assert.equal(basePath(site), "", baseUrl);
+    assert.equal(robotsTxt(site), "User-agent: *\nAllow: /\n", baseUrl);
+    assert.equal(sitemapXml(site, [rec]), "", baseUrl);
+  }
+});
+
+test("normalization preserves encoded subfolders and canonicalizes the host", () => {
+  const site = { indexable: true, baseUrl: "HTTPS://EXAMPLE.ORG:443/archive%20demo?x=1#sample" };
+  assert.equal(basePath(site), "/archive%20demo/");
+  assert.match(robotsTxt(site), /Sitemap: https:\/\/example\.org\/archive%20demo\/sitemap\.xml\n$/);
+  assert.match(sitemapXml(site, [rec]), /<loc>https:\/\/example\.org\/archive%20demo\/r\/x_1\.html<\/loc>/);
+});
+
+test("non-indexable portals remain blocked with a decorated baseUrl", () => {
+  const site = { indexable: false, baseUrl: "https://example.org/archive?x=1#sample" };
+  assert.equal(basePath(site), "/archive/");
+  assert.equal(robotsTxt(site), "User-agent: *\nDisallow: /\n");
+  assert.equal(sitemapXml(site, [rec]), "");
+});
