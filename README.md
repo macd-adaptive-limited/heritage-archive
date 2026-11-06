@@ -70,3 +70,19 @@ npm run build
 ```
 
 Every name is invented; any resemblance to real people is accidental.
+
+## PDF page extraction
+
+With Poppler's `pdftoppm` installed, `node src/pages.mjs source.pdf output-pages 200`
+extracts numbered PNG page images. DPI defaults to 200 and must be an integer
+from 36 to 1200. The output's parent directory must already exist. The source
+PDF must be outside the output directory so replacing pages cannot delete it.
+
+Extraction stages a fresh set of files and replaces the output directory only
+when the converter succeeds and produces non-empty numbered page files. Failed
+conversion preserves an existing extraction; successful conversion removes old
+pages rather than mixing documents or counting stale PNGs. Use a dedicated
+output folder: successful extraction replaces **all** of its previous contents.
+Do not run concurrent extractions to the same destination. This checks file
+presence and size, not PNG decoding or transcription quality. No scans are
+committed or published by the extraction command.
