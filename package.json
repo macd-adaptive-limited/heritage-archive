@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "validate": "node src/validate.mjs",
-    "build": "node src/build.mjs && pagefind --site site",
+    "build": "node src/build.mjs --index",
     "test": "node --test"
   },
   "devDependencies": {

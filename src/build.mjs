@@ -1,6 +1,7 @@
 // Static portal generator: data/records.json -> site/ (index page + one page per record),
-// then Pagefind (MIT) indexes the pages for in-browser, accent-insensitive search.
+// with --index, Pagefind (MIT) indexes the staged pages before replacement.
 // Run with `npm run build`. Output is plain HTML/CSS/JS.
+import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, copyFileSync, cpSync, lstatSync, readdirSync } from "node:fs";
 import { resolve, join, relative, sep } from "node:path";
 import { replaceOutput } from "./output.mjs";
@@ -79,5 +80,11 @@ replaceOutput("site", (output) => {
   writeFileSync(join(output, "robots.txt"), robotsTxt(site));
   const sitemap = sitemapXml(site, records);
   if (sitemap) writeFileSync(join(output, "sitemap.xml"), sitemap);
+
+  // The documented full build must not replace a working portal until search
+  // indexing also succeeds. Keep the HTML-only entry point for tooling/tests.
+  if (process.argv.includes("--index")) {
+    execFileSync(process.execPath, [resolve("node_modules/pagefind/lib/runner/bin.cjs"), "--site", resolve(output)], { stdio: "inherit" });
+  }
 });
 console.log(`site/ built: ${records.length} record pages`);
