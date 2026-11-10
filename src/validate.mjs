@@ -1,6 +1,8 @@
 // Validates data/records.json against the model in docs/MODELO.md.
 // Usage: node src/validate.mjs [path]   (default data/records.json). Exit code 1 on any error.
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { safeImage, safeBox, safeId } from "./render.mjs";
 
 const CONFIANZA = new Set(["alta", "media", "baja"]);
@@ -62,7 +64,7 @@ export function validateRecords(records) {
   return errors;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const path = process.argv[2] || "data/records.json";
   let records;
   try { records = JSON.parse(readFileSync(path, "utf8")); } catch (e) { console.error(`${path}: cannot read or parse (${e.message})`); process.exit(1); }
