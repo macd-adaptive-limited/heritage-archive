@@ -1,6 +1,6 @@
 // Extract PDF page images without mixing a failed run with a previous output.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readdirSync, statSync, realpathSync } from "node:fs";
+import { mkdirSync, readdirSync, statSync, lstatSync, realpathSync } from "node:fs";
 import { resolve, relative, sep, join, dirname, basename } from "node:path";
 import { pathToFileURL } from "node:url";
 import { replaceOutput } from "./output.mjs";
@@ -29,7 +29,7 @@ export function extractPages(pdf, out, dpi = "200", run = execFileSync) {
     const pages = readdirSync(staged).filter((name) => /^pagina-\d+\.png$/.test(name));
     if (!pages.length) throw new Error("pdftoppm produced no page images");
     for (const page of pages) {
-      const file = statSync(join(staged, page));
+      const file = lstatSync(join(staged, page));
       if (!file.isFile() || file.size === 0) throw new Error(`Invalid or empty page image: ${page}`);
     }
     count = pages.length;
