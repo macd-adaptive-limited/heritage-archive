@@ -29,14 +29,15 @@ npm test
 
 Serve `site/` with any static file server.
 
-The HTML generator (`node src/build.mjs`) prepares files in a temporary sibling
-folder and replaces `site/` only after generation succeeds. An image-copy or
-missing-viewer failure preserves the previous portal; a failed replacement
-attempt restores it. Successful generation removes stale files. The destination
+The full build (`npm run build`) prepares files and the Pagefind search index in
+a temporary sibling folder and replaces `site/` only after both succeed. An
+image-copy, missing-viewer, or indexing failure preserves the previous portal;
+a failed replacement attempt restores it. Successful generation removes stale files. The destination
 must be a regular directory, not a file or symlink. Do not run concurrent builds
-against the same output. This is not a deployment transaction: the later Pagefind
-indexing command is separate, and abrupt process termination or disk failure can
-still interrupt the directory swap. Keep release backups for deployments.
+against the same output. `node src/build.mjs` remains an HTML-only entry point;
+use `npm run build` (or `node src/build.mjs --index`) for a searchable portal.
+This is not a deployment transaction: abrupt process termination or disk failure
+can still interrupt the directory swap. Keep release backups for deployments.
 
 ## Loading your own data
 
