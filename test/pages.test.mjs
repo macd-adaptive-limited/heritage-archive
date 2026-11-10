@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, symlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, isAbsolute } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -72,3 +72,18 @@ test("CLI missing arguments returns one concise failure without a stack", () => 
   assert.equal(result.status, 1); assert.match(result.stderr, /Page extraction failed: usage:/);
   assert.doesNotMatch(result.stderr, /^\s+at\s/m);
 });
+
+for (const dangling of [false, true]) {
+  test(`${dangling ? "dangling" : "regular"} image symlinks cannot replace previous pages`, () => fixture((dir, pdf, out) => {
+    const source = join(dir, "external-image.png");
+    if (!dangling) writeFileSync(source, "EXTERNAL IMAGE MUST SURVIVE");
+    assert.throws(() => extractPages(pdf, out, "200", (command, args) => {
+      symlinkSync(source, `${args[4]}-1.png`);
+    }), /Invalid or empty page image/);
+    assert.equal(readFileSync(join(out, "pagina-099.png"), "utf8"), "OLD IMAGE");
+    assert.deepEqual(readdirSync(out), ["pagina-099.png"]);
+    assert.equal(existsSync(source), !dangling);
+    if (!dangling) assert.equal(readFileSync(source, "utf8"), "EXTERNAL IMAGE MUST SURVIVE");
+    assert.equal(readdirSync(dir).some(name => name.startsWith(".pages-build-")), false);
+  }));
+}

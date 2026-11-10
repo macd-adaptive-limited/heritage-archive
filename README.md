@@ -80,7 +80,8 @@ from 36 to 1200. The output's parent directory must already exist. The source
 PDF must be outside the output directory so replacing pages cannot delete it.
 
 Extraction stages a fresh set of files and replaces the output directory only
-when the converter succeeds and produces non-empty numbered page files. Failed
+when the converter succeeds and produces non-empty numbered regular page files.
+Numbered page symlinks, including dangling links, are rejected before replacement. Failed
 conversion preserves an existing extraction; successful conversion removes old
 pages rather than mixing documents or counting stale PNGs. Use a dedicated
 output folder: successful extraction replaces **all** of its previous contents.
