@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, symlinkSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, isAbsolute } from "node:path";
+import { join, dirname, isAbsolute } from "node:path";
 import { spawnSync } from "node:child_process";
 import { extractPages } from "../src/pages.mjs";
 
@@ -35,10 +35,10 @@ test("partial converter failure preserves the complete previous output", () => f
   assert.deepEqual(readdirSync(out), ["pagina-099.png"]);
   assert.deepEqual(readdirSync(dir).sort(), ["-fictional input.pdf", "pages"]);
 }));
-test("no generated pages cannot replace a previous extraction", () => fixture((dir, pdf, out) => {
+test("unexpected converter filenames cannot replace a previous extraction", () => fixture((dir, pdf, out) => {
   assert.throws(() => extractPages(pdf, out, "200", (command, args) => {
     writeFileSync(`${args[4]}-notes.png`, "NOT A NUMBERED PAGE");
-  }), /no page images/);
+  }), /unexpected output entries/);
   assert.ok(existsSync(join(out, "pagina-099.png")));
 }));
 test("empty images and image-named directories cannot replace previous pages", () => fixture((dir, pdf, out) => {
@@ -84,6 +84,24 @@ for (const dangling of [false, true]) {
     assert.deepEqual(readdirSync(out), ["pagina-099.png"]);
     assert.equal(existsSync(source), !dangling);
     if (!dangling) assert.equal(readFileSync(source, "utf8"), "EXTERNAL IMAGE MUST SURVIVE");
+    assert.equal(readdirSync(dir).some(name => name.startsWith(".pages-build-")), false);
+  }));
+}
+
+for (const kind of ["file", "directory", "symlink"]) {
+  test(`unexpected ${kind} beside a valid page cannot replace the previous extraction`, () => fixture((dir, pdf, out) => {
+    const external = join(dir, "external.txt");
+    writeFileSync(external, "EXTERNAL SYNTHETIC CONTENT");
+    assert.throws(() => extractPages(pdf, out, "200", (command, args) => {
+      fakePages(command, args);
+      const extra = join(dirname(args[4]), "unexpected");
+      if (kind === "directory") mkdirSync(extra);
+      else if (kind === "symlink") symlinkSync(external, extra);
+      else writeFileSync(extra, "UNEXPECTED SYNTHETIC CONTENT");
+    }), /unexpected output entries/);
+    assert.deepEqual(readdirSync(out), ["pagina-099.png"]);
+    assert.equal(readFileSync(join(out, "pagina-099.png"), "utf8"), "OLD IMAGE");
+    assert.equal(readFileSync(external, "utf8"), "EXTERNAL SYNTHETIC CONTENT");
     assert.equal(readdirSync(dir).some(name => name.startsWith(".pages-build-")), false);
   }));
 }
