@@ -26,8 +26,13 @@ export function extractPages(pdf, out, dpi = "200", run = execFileSync) {
     mkdirSync(staged);
     // Absolute input also prevents a filename beginning with '-' becoming an option.
     run("pdftoppm", ["-r", resolution, "-png", input, join(staged, "pagina")], { stdio: "inherit" });
-    const pages = readdirSync(staged).filter((name) => /^pagina-\d+\.png$/.test(name));
+    const pages = readdirSync(staged);
     if (!pages.length) throw new Error("pdftoppm produced no page images");
+    // Publish only the converter's expected numbered images, not incidental
+    // files, directories or links alongside otherwise valid pages.
+    if (pages.some((name) => !/^pagina-\d+\.png$/.test(name))) {
+      throw new Error("pdftoppm produced unexpected output entries");
+    }
     for (const page of pages) {
       const file = lstatSync(join(staged, page));
       if (!file.isFile() || file.size === 0) throw new Error(`Invalid or empty page image: ${page}`);
